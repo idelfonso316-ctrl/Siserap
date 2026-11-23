@@ -192,18 +192,30 @@ const o={...(ed?st(ed):{id:uid()}),...d};if(!ed){o.anio=ay;o.docente=docN()}awai
 /* RA */
 let rtab='asig';
 function vRAx(){return `<div class="card np"><button class="${rtab==='asig'?'on':''}" onclick="rtab='asig';render()">Asignar RA pendiente</button> <button class="${rtab==='cat'?'on':''}" onclick="rtab='cat';render()">Catálogos: asignaturas, RA, áreas, grados</button></div>`+(rtab==='cat'?vCat():vRA())}
-function vRA(){if(!st(rs).id)rs='';const A=D.cfg.filter(c=>c.t==='asig').map(c=>c.v).sort();if(!A.includes(rA))rA=A.includes(st(rs).asignatura)?st(rs).asignatura:(A[0]||'');const CR=D.cfg.filter(c=>c.t==='ra'&&c.asig===rA);
-return `<div class="card"><h2>Asignar RA pendiente</h2>${ST().length?`<form onsubmit="saveR(event)" class="g">${pk('est',rs,'ra','Estudiante *')}${sel('asig','Asignatura',A,rA,'onchange="rA=this.value;render()"')}<div class="w"><div class="mu">Marque los RA pendientes de la asignatura</div>${CR.map(c=>`<label style="flex-direction:row;gap:8px;color:var(--tx);margin:6px 0"><input type="checkbox" name="cra" value="${c.id}" style="min-height:20px;min-width:20px"><span><b>${esc(c.cod)}</b> ${esc(c.desc)}</span></label>`).join('')||'<p class="mu">Esta asignatura no tiene RA. <button type="button" class="sm" onclick="rtab=\'cat\';render()">Agregar RA al catálogo</button></p>'}</div><details class="w"><summary>Escribir un RA que no está en el catálogo</summary><div class="g">${f('cod','Identificación del RA')}${ta('desc','Descripción del RA')}</div></details>${f('fecha','Fecha de identificación',today(),'date')}${ta('motivo','Motivo u observación académica')}${sel('estado','Estado',ES)}<div class="w"><button class="p">Guardar</button></div></form>`:'<p>Primero registre estudiantes.</p>'}</div>
+let rf={g:'',s:'',a:''},rsel=[];
+const rfList=()=>ST().filter(s=>(rf.g||rf.s||rf.a)&&(!rf.g||s.grado===rf.g)&&(!rf.s||s.seccion===rf.s)&&(!rf.a||s.area===rf.a)).sort((a,b)=>nm(a).localeCompare(nm(b)));
+const rfSet=(k,v)=>{rf[k]=v;rsel=[];render()};
+function tgS(id,c){rsel=c?[...new Set([...rsel,id])]:rsel.filter(x=>x!==id);const e=$('#rcnt');if(e)e.textContent=rsel.length+' seleccionado(s)'}
+function tgAll(c){const ids=rfList().map(x=>x.id);rsel=c?[...new Set([...rsel,...ids])]:rsel.filter(x=>!ids.includes(x));render()}
+function vRA(){const A=D.cfg.filter(c=>c.t==='asig').map(c=>c.v).sort();if(!A.includes(rA))rA=A[0]||'';const CR=D.cfg.filter(c=>c.t==='ra'&&c.asig===rA);
+const L=rfList(),hasF=rf.g||rf.s||rf.a,all=L.length&&L.every(s=>rsel.includes(s.id));
+const lb='style="flex-direction:row;gap:8px;align-items:center;color:var(--tx);margin:4px 0"',cb='style="min-height:20px;min-width:20px"';
+const box=!hasF?'<p class="mu">Elija el grado, la sección y/o el área técnica para ver los estudiantes.</p>':!L.length?'<p class="mu">No hay estudiantes con esa selección.</p>':`<label ${lb}><input type="checkbox" ${all?'checked':''} onchange="tgAll(this.checked)" ${cb}><b>Seleccionar todos (${L.length})</b></label>${L.map(s=>`<label ${lb}><input type="checkbox" name="stu" value="${s.id}" ${rsel.includes(s.id)?'checked':''} onchange="tgS('${s.id}',this.checked)" ${cb}><span>${esc(nm(s))} <span class="mu">· ${esc(s.grado+' '+s.seccion)} · ${esc(s.area)}</span></span></label>`).join('')}`;
+return `<div class="card"><h2>Asignar RA pendiente</h2>${ST().length?`<div class="g"><label>Grado<select onchange="rfSet('g',this.value)">${opts('grado',rf.g,'Todos')}</select></label><label>Sección<select onchange="rfSet('s',this.value)">${opts('seccion',rf.s,'Todas')}</select></label><label>Área técnica<select onchange="rfSet('a',this.value)">${opts('area',rf.a,'Todas')}</select></label></div>
+<form onsubmit="saveR(event)" class="g" style="margin-top:10px"><div class="w"><div class="mu">Estudiantes de la selección · <b id="rcnt">${rsel.length} seleccionado(s)</b></div><div style="max-height:260px;overflow:auto;border:1px solid var(--br);border-radius:8px;padding:8px;margin-top:4px">${box}</div></div>${sel('asig','Asignatura',A,rA,'onchange="rA=this.value;render()"')}<div class="w"><div class="mu">Marque los RA pendientes de la asignatura</div>${CR.map(c=>`<label ${lb}><input type="checkbox" name="cra" value="${c.id}" ${cb}><span><b>${esc(c.cod)}</b> ${esc(c.desc)}</span></label>`).join('')||'<p class="mu">Esta asignatura no tiene RA. <button type="button" class="sm" onclick="rtab=\'cat\';render()">Agregar RA al catálogo</button></p>'}</div><details class="w"><summary>Escribir un RA que no está en el catálogo</summary><div class="g">${f('cod','Identificación del RA')}${ta('desc','Descripción del RA')}</div></details>${f('fecha','Fecha de identificación',today(),'date')}${ta('motivo','Motivo u observación académica')}${sel('estado','Estado',ES)}<div class="w"><button class="p">Asignar a los estudiantes marcados</button></div></form>`:'<p>Primero registre estudiantes.</p>'}</div>
 <div class="card"><h2>RA registrados</h2><div class="g"><input placeholder="Buscar" value="${esc(fl.r)}" oninput="fl.r=this.value;$('#lst').innerHTML=listR()"><select onchange="fl.e=this.value;$('#lst').innerHTML=listR()">${['',...ES].map(x=>`<option value="${x}"${x===fl.e?' selected':''}>${x||'Todos los estados'}</option>`).join('')}</select></div><div id="lst">${listR()}</div></div>`}
+
 function listR(){const q=fl.r.toLowerCase();
 return tbl(['Estudiante','RA','Estado e historial'],RS().filter(r=>(!q||(nm(st(r.est))+r.cod+r.desc).toLowerCase().includes(q))&&(!fl.e||r.estado===fl.e)).map(r=>{const s=st(r.est);
 return [esc(nm(s))+dt(r)+'<br><span class="mu">'+esc(s.grado+' '+s.seccion)+'</span>','<b>'+esc(r.cod)+'</b><br>'+esc(r.desc),`<select onchange="setE('${r.id}',this.value)">${ES.map(x=>`<option${x===r.estado?' selected':''}>${x}</option>`).join('')}</select><details><summary>Historial (${r.hist.length})</summary>${r.hist.map(h=>`<div class="mu">${fmt(h.f)} · ${esc(h.e)} ${esc(h.n)}</div>`).join('')}</details>`]}))}
-async function saveR(e){e.preventDefault();const fm=new FormData(e.target),d=Object.fromEntries(fm),s=st(d.est);if(!s.id)return toast('Escriba el nombre y elija un estudiante de la lista.',1);
+async function saveR(e){e.preventDefault();const fm=new FormData(e.target),d=Object.fromEntries(fm);
+const ids=fm.getAll('stu').filter(id=>ST().some(s=>s.id===id));if(!ids.length)return toast('Marque al menos un estudiante de la lista.',1);
 const it=fm.getAll('cra').map(id=>D.cfg.find(c=>c.id===id)).filter(Boolean).map(c=>({cod:c.cod,desc:c.desc,asig:c.asig}));
 if((d.cod||'').trim()&&(d.desc||'').trim())it.push({cod:cl(d.cod).slice(0,40),desc:cl(d.desc).slice(0,300),asig:d.asig||''});
 if(!it.length)return toast('Marque al menos un RA del catálogo o escriba uno.',1);
-let n=0;for(const x of it){if(RS().some(r=>r.est===s.id&&r.cod===x.cod&&(r.asig||'')===x.asig))continue;await put('ras',{id:uid(),est:s.id,cod:x.cod,desc:x.desc,asig:x.asig,fecha:d.fecha,motivo:d.motivo,docente:d.docente||s.docente,estado:d.estado,hist:[{f:d.fecha,e:d.estado,n:'RA identificado'}]});n++}
-await lg('Asignó '+n+' RA a '+nm(s));toast(n?n+' RA asignados.':'Esos RA ya estaban asignados.');render()}
+let n=0;for(const id of ids){const s=st(id);for(const x of it){if(RS().some(r=>r.est===id&&r.cod===x.cod&&(r.asig||'')===x.asig))continue;await put('ras',{id:uid(),est:id,cod:x.cod,desc:x.desc,asig:x.asig,fecha:d.fecha,motivo:d.motivo,docente:docN()||s.docente,estado:d.estado,hist:[{f:d.fecha,e:d.estado,n:'RA identificado'}]});n++}}
+await lg('Asignó '+n+' RA a '+ids.length+' estudiante(s)');toast(n?n+' RA asignados a '+ids.length+' estudiante(s).':'Esos RA ya estaban asignados.');rsel=[];render()}
+
 async function setE(id,e){const r=RS().find(x=>x.id===id);if(r.estado===e)return;r.estado=e;r.hist.push({f:today(),e,n:''});await put('ras',r);lg('RA '+r.cod+' pasó a '+e);toast('Estado actualizado; el historial se conserva.');render()}
 
 /* EVIDENCIAS */
@@ -294,7 +306,7 @@ if(!Y.length){const d=new Date(),y=d.getFullYear(),v=d.getMonth()>=7?y+'-'+(y+1)
 ay=fl0&&Y.includes(fl0.v)?fl0.v:Y[Y.length-1];
 if(!fl0||fl0.v!==ay)await put('cfg',{id:'anioAct',t:'flag',v:ay});
 for(const s of D.students)if(!s.anio){s.anio=ay;await put('students',s)}}
-async function setAy(v){ay=v;await put('cfg',{id:'anioAct',t:'flag',v});rs='';sgi='';fl={q:'',g:'',s:'',a:'',r:'',e:''};fo={g:'',s:'',a:'',d:'',f:today(),i:''};toast('Año escolar activo: '+v);go(view)}
+async function setAy(v){ay=v;await put('cfg',{id:'anioAct',t:'flag',v});rs='';rsel=[];rf={g:'',s:'',a:''};sgi='';fl={q:'',g:'',s:'',a:'',r:'',e:''};fo={g:'',s:'',a:'',d:'',f:today(),i:''};toast('Año escolar activo: '+v);go(view)}
 async function newYear(){const v=cl($('#ny').value).slice(0,40);if(!v)return toast('Escriba el nombre del año escolar.',1);
 if(years().includes(v))return toast('Ese año escolar ya existe.',1);
 const cp=$('#nycp').checked,old=ST();await put('cfg',{id:uid(),t:'anio',v});
